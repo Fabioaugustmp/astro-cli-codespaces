@@ -1,0 +1,105 @@
+sources:
+  - name: staging
+    tables:
+      - name: disponibilidade_usina_2025_07
+      - name: disponibilidade_usina_2025_08
+      - name: disponibilidade_usina_2025_09
+      - name: stg_usina_disp
+
+models:
+  - name: stg_usina_disp
+    columns:
+      - name: ID_SUBSISTEMA
+        tests: [not_null]
+      - name: NOM_SUBSISTEMA
+        tests: [not_null]
+      - name: ID_ESTADO
+        tests: [not_null]
+      - name: NOM_ESTADO
+      - name: NOM_USINA
+      - name: ID_TIPOUSINA
+      - name: NOM_TIPOCOMBUSTIVEL
+      - name: ID_ONS
+      - name: CEG
+      - name: DIN_INSTANTE
+      - name: VAL_POTENCIAINSTALADA
+      - name: VAL_DISPOPERACIONAL
+      - name: VAL_DISPSINCRONIZADA
+
+  - name: dim_usina
+    description: "Dimensão com atributos únicos das usinas (nome, tipo de combustível e CEG)."
+    columns:
+      - name: id_dim_usina
+        description: "Chave substituta gerada por dbt_utils.generate_surrogate_key sobre (nom_usina, nom_tipocombustivel, ceg)."
+        tests:
+          - not_null
+          - unique
+      - name: nom_usina
+        description: "Nome da usina"
+      - name: nom_tipocombustivel
+        description: "Tipo de combustível"
+      - name: ceg
+        description: "Código CEG da usina"
+
+  - name: dim_localidade
+    description: "Dimensão de localidade com subsistema e estado."
+    columns:
+      - name: id_dim_localidade
+        description: "Chave substituta gerada por dbt_utils.generate_surrogate_key sobre (nom_subsistema, nom_estado)."
+        tests:
+          - not_null
+          - unique
+      - name: nom_subsistema
+        description: "Nome do subsistema/localidade"
+      - name: nom_estado
+        description: "Nome do estado"
+
+  - name: dim_tempo
+    description: "Dimensão de tempo extraída da coluna din_instante (ano, mês, dia, hora)."
+    columns:
+      - name: id_dim_tempo
+        description: "Chave substituta gerada por dbt_utils.generate_surrogate_key sobre (instante)."
+        tests:
+          - not_null
+          - unique
+      - name: instante
+        description: "Timestamp do instante"
+      - name: ano
+        description: "Ano do instante"
+      - name: mes
+        description: "Mês do instante"
+      - name: dia
+        description: "Dia do instante"     
+
+  - name: fact_disponibilidade
+    description: "Fato central com disponibilidade por usina, localidade e instante (grão detalhado)."
+    columns:
+      - name: id_dim_usina
+        description: "FK para dim_usina"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_usina')
+              field: id_dim_usina
+      - name: id_dim_localidade
+        description: "FK para dim_localidade"
+        tests:
+          - relationships:
+              to: ref('dim_localidade')
+              field: id_dim_localidade
+      - name: id_dim_tempo
+        description: "FK para dim_tempo"
+        tests:
+          - relationships:
+              to: ref('dim_tempo')
+              field: id_dim_tempo
+      - name: instante
+        description: "Timestamp original do registro"
+        tests: [not_null]
+      - name: pot_instalada_mw
+        description: "Potência instalada (MW)"
+        tests: [not_null]
+      - name: disp_operacional_mw
+        description: "Disponibilidade operacional (MW)"
+      - name: disp_sincronizada_mw
+        description: "Disponibilidade sincronizada (MW)"

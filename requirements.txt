@@ -3,3 +3,9 @@ apache-airflow-providers-common-sql==1.11.0  # pin provider versions!
 apache-airflow-providers-snowflake
 dbt-snowflake==1.7.0
 astronomer-cosmos
+
+apache-airflow-providers-amazon  # Necessário para o S3Hook (listagem de arquivos)
+apache-airflow-providers-snowflake # Necessário para o operador de transferência
+astronomer-cosmos
+dbt-core
+dbt-snowflake
